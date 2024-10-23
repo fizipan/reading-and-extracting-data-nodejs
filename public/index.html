@@ -1,0 +1,109 @@
+<!DOCTYPE html>
+<html lang="en">
+  <head>
+    <meta charset="UTF-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+    <title>Bukti Potong Pajak Pembelian Barang</title>
+    <style>
+      /* Simple styles for the loading spinner */
+      #loading {
+        display: none;
+        font-size: 18px;
+        margin-top: 20px;
+      }
+      .spinner {
+        border: 4px solid #f3f3f3; /* Light grey */
+        border-top: 4px solid #3498db; /* Blue */
+        border-radius: 50%;
+        width: 24px;
+        height: 24px;
+        animation: spin 2s linear infinite;
+        display: inline-block;
+        margin-left: 10px;
+      }
+      @keyframes spin {
+        0% {
+          transform: rotate(0deg);
+        }
+        100% {
+          transform: rotate(360deg);
+        }
+      }
+    </style>
+  </head>
+  <body>
+    <h1>Bukti Potong Pajak Pembelian Barang</h1>
+    <form id="uploadForm" enctype="multipart/form-data">
+      <input
+        type="file"
+        id="fileInput"
+        name="file"
+        accept="application/pdf"
+        required
+      />
+      <button type="submit">Submit</button>
+    </form>
+
+    <div id="loading">
+      Processing your file... <span class="spinner"></span>
+    </div>
+
+    <div id="message" style="display: none">
+      <p>
+        Pesan berhasil:
+        <a id="downloadLink" href="#" target="_blank">Unduh File PDF</a>
+      </p>
+    </div>
+
+    <script>
+      const form = document.getElementById("uploadForm");
+      const loadingDiv = document.getElementById("loading");
+      const messageDiv = document.getElementById("message");
+      const downloadLink = document.getElementById("downloadLink");
+
+      form.addEventListener("submit", async (event) => {
+        event.preventDefault();
+
+        // Show the loading spinner and hide the message
+        loadingDiv.style.display = "block";
+        messageDiv.style.display = "none";
+
+        const formData = new FormData();
+        const fileInput = document.getElementById("fileInput");
+        formData.append("file", fileInput.files[0]);
+
+        try {
+          const response = await fetch("/upload", {
+            method: "POST",
+            body: formData,
+          });
+
+          if (response.ok) {
+            // Create a blob from the response (PDF file)
+            const blob = await response.blob();
+            const filename = response.headers
+              .get("Content-Disposition")
+              .split("filename=")[1]
+              .replace(/['"]/g, "");
+
+            // Create a URL for the blob and set it as the href of the download link
+            const url = URL.createObjectURL(blob);
+            downloadLink.href = url;
+            downloadLink.download = filename;
+
+            // Hide the loading spinner and show the message with the download link
+            loadingDiv.style.display = "none";
+            messageDiv.style.display = "block";
+          } else {
+            alert("Failed to process the PDF");
+            loadingDiv.style.display = "none"; // Hide the loading spinner on error
+          }
+        } catch (error) {
+          alert("Error uploading the file");
+          loadingDiv.style.display = "none"; // Hide the loading spinner on error
+        }
+      });
+    </script>
+  </body>
+</html>
+
